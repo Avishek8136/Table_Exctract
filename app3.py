@@ -1,21 +1,19 @@
 import os
-import subprocess
-import sys
 import cv2
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 import streamlit as st
-from pathlib import Path
 from PIL import Image
 import layoutparser as lp
 from paddleocr import PaddleOCR
 
-# Load OCR and Layout model only once and cache them
+# Cache the OCR model
 @st.cache_resource
 def load_ocr_model():
     return PaddleOCR(lang='en')
 
+# Cache the Layout model
 @st.cache_resource
 def load_layout_model():
     return lp.PaddleDetectionLayoutModel(
@@ -28,16 +26,16 @@ def load_layout_model():
 
 # Define the main processing function
 def process_image(image_path):
-    # Load models
+    # Load the models (cached)
     ocr = load_ocr_model()
-    model = load_layout_model()
+    layout_model = load_layout_model()
 
     # Read image
     image_cv = cv2.imread(image_path)
     image_height, image_width = image_cv.shape[:2]
 
     # Detect layout
-    layout = model.detect(image_cv)
+    layout = layout_model.detect(image_cv)
     x_1, y_1, x_2, y_2 = 0, 0, 0, 0
     for l in layout:
         if l.type == 'Table':
@@ -147,6 +145,10 @@ def main():
             file_name="output.csv",
             mime="text/csv"
         )
+
+        # Option to upload again
+        if st.button("Upload Another Image"):
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
