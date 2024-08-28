@@ -3,7 +3,7 @@ opencv-python-headless
 numpy
 pandas
 tornado
-protobuf==3.20.0
 paddleocr
 layoutparser
 tensorflow==2.16.2
+protobuf==3.20.3
