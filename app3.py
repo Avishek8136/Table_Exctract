@@ -11,8 +11,6 @@ from PIL import Image
 import layoutparser as lp
 from paddleocr import PaddleOCR
 
-
-
 # Define the main processing function
 def process_image(image_path):
     # Load OCR model
@@ -142,6 +140,10 @@ def main():
             file_name="output.csv",
             mime="text/csv"
         )
+
+        # Button to upload another image
+        if st.button("Upload Another Image"):
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
