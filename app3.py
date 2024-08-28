@@ -1,17 +1,19 @@
+import io
 import os
-import subprocess
-import sys
+import pandas as pd
+import streamlit as st
+from PIL import Image
 import cv2
 import numpy as np
-import pandas as pd
 import tensorflow as tf
-import streamlit as st
-from pathlib import Path
-from PIL import Image
 import layoutparser as lp
 from paddleocr import PaddleOCR
+from pdf2image import convert_from_path
+import tempfile
 
-
+# Initialize session state if not already set
+if 'uploaded_file' not in st.session_state:
+    st.session_state.uploaded_file = None
 
 # Define the main processing function
 def process_image(image_path):
@@ -46,12 +48,6 @@ def process_image(image_path):
     texts = [line[1][0] for line in output]
     probabilities = [line[1][1] for line in output]
 
-    # Prepare image for visualization
-    image_boxes = image_cv.copy()
-    for box, text in zip(boxes, texts):
-        cv2.rectangle(image_boxes, (int(box[0][0]), int(box[0][1])), (int(box[2][0]), int(box[2][1])), (0, 0, 255), 1)
-        cv2.putText(image_boxes, text, (int(box[0][0]), int(box[0][1])), cv2.FONT_HERSHEY_SIMPLEX, 1, (222, 0, 0), 1)
-
     # Prepare for non-max suppression
     horiz_boxes, vert_boxes = [], []
     for box in boxes:
@@ -62,9 +58,6 @@ def process_image(image_path):
 
         horiz_boxes.append([x_h, y_h, x_h + width_h, y_h + height_h])
         vert_boxes.append([x_v, y_v, x_v + width_v, y_v + height_v])
-
-        cv2.rectangle(image_boxes, (x_h, y_h), (x_h + width_h, y_h + height_h), (0, 0, 255), 1)
-        cv2.rectangle(image_boxes, (x_v, y_v), (x_v + width_v, y_v + height_v), (0, 255, 0), 1)
 
     # Apply non-max suppression
     horiz_out = tf.image.non_max_suppression(
@@ -109,39 +102,79 @@ def process_image(image_path):
                 if iou(resultant, the_box) > 0.1:
                     out_array[i][j] = texts[b]
 
-    return image_boxes, out_array
+    return out_array
 
 # Streamlit app
 def main():
-    st.title("Image Processing and OCR with Streamlit")
+    st.title("Omkara Extractor")
 
-    uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+    # Sidebar for uploading images and other options
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown("### About the App")
+        st.markdown(
+            "This app allows you to upload an image or PDF and perform OCR and table extraction using PaddleOCR and LayoutParser."
+        )
+
+    uploaded_file = st.file_uploader("Upload an image or PDF", type=["png", "jpg", "jpeg", "pdf"])
 
     if uploaded_file is not None:
-        # Read image
-        image_path = "/tmp/uploaded_image.png"
-        with open(image_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
+        st.session_state.uploaded_file = uploaded_file
+        st.write("Upload successful!")
 
-        # Process image
-        image_boxes, out_array = process_image(image_path)
+        # Create a temporary directory to store the images
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Check if file is a PDF
+            if uploaded_file.type == "application/pdf":
+                # Save uploaded PDF to a temporary file
+                pdf_path = os.path.join(temp_dir, "uploaded_file.pdf")
+                with open(pdf_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
 
-        # Display results
-        st.image(image_boxes, caption="Processed Image with Detections", use_column_width=True)
+                # Convert PDF to images
+                images = convert_from_path(pdf_path)
+                results = []
+                for i, image in enumerate(images):
+                    image_path = os.path.join(temp_dir, f"page_{i}.png")
+                    image.save(image_path, format="PNG")
+                    # Process image and append results
+                    with st.spinner(f"Processing page {i + 1}..."):
+                        out_array = process_image(image_path)
+                        results.append(pd.DataFrame(out_array))
 
-        # Display results in a table
-        st.write("Extracted Table Data:")
-        df = pd.DataFrame(out_array)
-        st.dataframe(df)
+                # Concatenate all results into one DataFrame
+                final_df = pd.concat(results, keys=[f"Page {i + 1}" for i in range(len(results))], names=["Page"])
+            else:
+                # Save uploaded image to temp file
+                image_path = os.path.join(temp_dir, "uploaded_image.png")
+                with open(image_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
 
-        # Download CSV
-        csv = df.to_csv(index=False)
-        st.download_button(
-            label="Download CSV",
-            data=csv,
-            file_name="output.csv",
-            mime="text/csv"
-        )
+                # Display uploaded image
+                image = Image.open(st.session_state.uploaded_file)
+                st.image(image, caption="Uploaded Image", use_column_width=True)
+
+                # Display processing indicator
+                with st.spinner("Processing the image..."):
+                    final_df = pd.DataFrame(process_image(image_path))
+
+            # Display results in a table
+            st.write("### Extracted Table Data")
+            st.dataframe(final_df.style.set_properties(**{'text-align': 'center'}).highlight_null('yellow'))
+
+            # Convert DataFrame to Excel
+            excel_buffer = io.BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                final_df.to_excel(writer, index=False, sheet_name='Extracted Data')
+
+            # Download Excel
+            excel_buffer.seek(0)
+            st.download_button(
+                label="Download Excel",
+                data=excel_buffer,
+                file_name="output.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 if __name__ == "__main__":
     main()
