@@ -1,22 +1,40 @@
 import os
+import subprocess
+import sys
 import cv2
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 import streamlit as st
+from pathlib import Path
 from PIL import Image
 import layoutparser as lp
 from paddleocr import PaddleOCR
 
-# Cache the OCR model
-@st.cache_resource
-def load_ocr_model():
-    return PaddleOCR(lang='en')
+# Ensure necessary packages are installed
+# def install_packages():
+#     try:
+#         import fitz  # PyMuPDF
+#     except ImportError:
+#         subprocess.check_call([sys.executable, "-m", "pip", "install", "pymupdf"])
 
-# Cache the Layout model
-@st.cache_resource
-def load_layout_model():
-    return lp.PaddleDetectionLayoutModel(
+#     try:
+#         from paddleocr import PaddleOCR
+#     except ImportError:
+#         subprocess.check_call([sys.executable, "-m", "pip", "install", "paddlepaddle", "paddleocr"])
+
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", "layoutparser"])
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", "protobuf==3.20.0"])
+
+# install_packages()
+
+# Define the main processing function
+def process_image(image_path):
+    # Load OCR model
+    ocr = PaddleOCR(lang='en')
+
+    # Load Layout model
+    model = lp.PaddleDetectionLayoutModel(
         config_path="lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config",
         threshold=0.5,
         label_map={0: "Text", 1: "Title", 2: "List", 3: "Table", 4: "Figure"},
@@ -24,18 +42,12 @@ def load_layout_model():
         enable_mkldnn=True
     )
 
-# Define the main processing function
-def process_image(image_path):
-    # Load the models (cached)
-    ocr = load_ocr_model()
-    layout_model = load_layout_model()
-
     # Read image
     image_cv = cv2.imread(image_path)
     image_height, image_width = image_cv.shape[:2]
 
     # Detect layout
-    layout = layout_model.detect(image_cv)
+    layout = model.detect(image_cv)
     x_1, y_1, x_2, y_2 = 0, 0, 0, 0
     for l in layout:
         if l.type == 'Table':
@@ -145,10 +157,6 @@ def main():
             file_name="output.csv",
             mime="text/csv"
         )
-
-        # Option to upload again
-        if st.button("Upload Another Image"):
-            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
