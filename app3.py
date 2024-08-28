@@ -12,21 +12,21 @@ import layoutparser as lp
 from paddleocr import PaddleOCR
 
 # Ensure necessary packages are installed
-def install_packages():
-    try:
-        import fitz  # PyMuPDF
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pymupdf"])
+# def install_packages():
+#     try:
+#         import fitz  # PyMuPDF
+#     except ImportError:
+#         subprocess.check_call([sys.executable, "-m", "pip", "install", "pymupdf"])
 
-    try:
-        from paddleocr import PaddleOCR
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "paddlepaddle", "paddleocr"])
+#     try:
+#         from paddleocr import PaddleOCR
+#     except ImportError:
+#         subprocess.check_call([sys.executable, "-m", "pip", "install", "paddlepaddle", "paddleocr"])
 
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "layoutparser"])
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "protobuf==3.20.0"])
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", "layoutparser"])
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", "protobuf==3.20.0"])
 
-install_packages()
+# install_packages()
 
 # Define the main processing function
 def process_image(image_path):
