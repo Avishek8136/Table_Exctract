@@ -11,36 +11,26 @@ from PIL import Image
 import layoutparser as lp
 from paddleocr import PaddleOCR
 
-# Ensure necessary packages are installed
-# def install_packages():
-#     try:
-#         import fitz  # PyMuPDF
-#     except ImportError:
-#         subprocess.check_call([sys.executable, "-m", "pip", "install", "pymupdf"])
+# Load OCR and Layout model only once and cache them
+@st.cache_resource
+def load_ocr_model():
+    return PaddleOCR(lang='en')
 
-#     try:
-#         from paddleocr import PaddleOCR
-#     except ImportError:
-#         subprocess.check_call([sys.executable, "-m", "pip", "install", "paddlepaddle", "paddleocr"])
-
-#     subprocess.check_call([sys.executable, "-m", "pip", "install", "layoutparser"])
-#     subprocess.check_call([sys.executable, "-m", "pip", "install", "protobuf==3.20.0"])
-
-# install_packages()
-
-# Define the main processing function
-def process_image(image_path):
-    # Load OCR model
-    ocr = PaddleOCR(lang='en')
-
-    # Load Layout model
-    model = lp.PaddleDetectionLayoutModel(
+@st.cache_resource
+def load_layout_model():
+    return lp.PaddleDetectionLayoutModel(
         config_path="lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config",
         threshold=0.5,
         label_map={0: "Text", 1: "Title", 2: "List", 3: "Table", 4: "Figure"},
         enforce_cpu=False,
         enable_mkldnn=True
     )
+
+# Define the main processing function
+def process_image(image_path):
+    # Load models
+    ocr = load_ocr_model()
+    model = load_layout_model()
 
     # Read image
     image_cv = cv2.imread(image_path)
