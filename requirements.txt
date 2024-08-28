@@ -12,6 +12,6 @@ paddlepaddle
 
 https://paddleocr.bj.bcebos.com/whl/layoutparser-0.0.0-py3-none-any.whl
 pdf2image
-
+openpyxl
 
 
