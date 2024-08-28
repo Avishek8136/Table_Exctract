@@ -1,0 +1,11 @@
+streamlit
+opencv-python-headless
+numpy
+pandas
+tensorflow
+paddlepaddle
+paddleocr
+layoutparser
+protobuf==3.20.0
+Pillow
+pymupdf
