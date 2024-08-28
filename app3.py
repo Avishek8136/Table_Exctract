@@ -27,7 +27,12 @@ from paddleocr import PaddleOCR
 #     subprocess.check_call([sys.executable, "-m", "pip", "install", "protobuf==3.20.0"])
 
 # install_packages()
-
+def install_layoutparser():
+    # Define the URL of the wheel file
+    wheel_url = "https://paddleocr.bj.bcebos.com/whl/layoutparser-0.0.0-py3-none-any.whl"
+    
+    # Download the wheel file using wget
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', wheel_url])
 # Define the main processing function
 def process_image(image_path):
     # Load OCR model
