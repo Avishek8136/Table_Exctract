@@ -2,7 +2,8 @@ streamlit
 opencv-python-headless
 numpy
 pandas
-tensorflow
+tornado
+tensorflow==2.14.1
 paddlepaddle
 paddleocr
 layoutparser
