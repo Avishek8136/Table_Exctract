@@ -9,3 +9,4 @@ tensorflow==2.16.2
 protobuf==3.20.3
 paddleocr
 paddlepaddle
+layoutparser==0.0.0
