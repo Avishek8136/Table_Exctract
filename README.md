@@ -73,10 +73,4 @@ The main dependencies of the project include:
 
 You can find the full list of dependencies in the `requirements.txt` file.
 
-## Contributing
 
-If you'd like to contribute to the project, feel free to fork the repository and submit a pull request. We welcome all contributions!
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
