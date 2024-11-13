@@ -50,6 +50,12 @@
 
 3. Once processed, you can view the extracted table in the app and download the results as an Excel file.
 
+## Deployment
+
+You can access the deployed version of the app at the following link:
+
+[Omkara Extractor Deployment](https://omkaraextractor.streamlit.app)
+
 ## File Structure
 
 ```
@@ -79,3 +85,4 @@ If you'd like to contribute to the project, feel free to fork the repository and
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
